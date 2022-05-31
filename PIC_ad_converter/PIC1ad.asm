@@ -20,6 +20,7 @@ BANK5 EQU 0x500
 
 ;//***** Variables *****
 ;//Bank0
+Timer EQU 0x20
 ;//Bank1
 ;//Bank2
 ;//Bank4
@@ -73,6 +74,31 @@ MainLoop
 ADLoop
 	BTFSC ADCON0,GO
 	BRA ADLoop
+
+;//Bits umsortieren
+	;//MOVF ADRESH,0
+	SWAPF ADRESH,0
+
+;//Output
+	;//LEDs
+	MOVWF PORTB
+	
+	;//Lautsprecher
+	BTG PORTC,RC2
+
+;//Verzögerung
+	CALL Delay
+	
+	
 	
 	BRA MainLoop ;// Main Loop
+	
+
+Delay
+TIMELoop
+	DECFSZ Timer,1
+	BRA TIMELoop
+	Return
+
 	END
+	
