@@ -42,6 +42,25 @@ IntVectLow
 	ORG 0x30
 ;//Initialisation Code
 Init
+;//Ports
+	;//Anaolog Input (unnötig)
+	BSF TRISA,RA0
+	;//Taster Input (unnötig)
+	BSF TRISA,RA4
+	
+	;//LEDs Output
+	MOVLW 0xF0
+	MOVWF TRISB
+
+	;//Lautsprecher Output
+	BCF TRISC,RC2
+
+	;// AD init
+	CLRF ADCON1
+	MOVLW 0x81
+	MOVWF ADCON0
+	
+	
 
 ;//Main Application Code
 MainLoop
