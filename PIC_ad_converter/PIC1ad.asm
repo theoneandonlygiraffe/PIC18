@@ -44,9 +44,9 @@ IntVectLow
 Init
 ;//Ports
 	;//Anaolog Input (unnötig)
-	BSF TRISA,RA0
+	;//BSF TRISA,RA0
 	;//Taster Input (unnötig)
-	BSF TRISA,RA4
+	;//BSF TRISA,RA4
 	
 	;//LEDs Output
 	MOVLW 0xF0
@@ -55,8 +55,8 @@ Init
 	;//Lautsprecher Output
 	BCF TRISC,RC2
 
-	;// AD init
-	CLRF ADCON1
+	;//AD init
+	;//CLRF ADCON1
 	MOVLW 0x81
 	MOVWF ADCON0
 	
@@ -64,6 +64,15 @@ Init
 
 ;//Main Application Code
 MainLoop
+	
+	BTFSC PORTA,RA4
+	BRA MainLoop ;//Wait for Taster gegen 0
 
-	BRA MainLoop ;//Do.. Forever
+;//start AD
+	BSF ADCON0,GO
+ADLoop
+	BTFSC ADCON0,GO
+	BRA ADLoop
+	
+	BRA MainLoop ;// Main Loop
 	END
