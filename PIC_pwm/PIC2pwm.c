@@ -18,7 +18,7 @@
 
 #pragma config OSC=HS,WDT=OFF,LVP=OFF  // HS Oszillator, Watchdog Timer disabled, Low Voltage Programming
 
-// #define Simulator        // zum Gebrauch mit Hardware auskommentieren
+#define Simulator        // zum Gebrauch mit Hardware auskommentieren
 // Define für LCD des neuen, grünen Demo-Boards:
 // #define NEUE_PLATINE  // Achtung: define vor include! Bei altem braunem Demo-Board auskommentieren!
 #include "p18f452.h"
@@ -32,12 +32,16 @@ unsigned int y=0;  // Analogwert AN7 (Istwert des PWM-Mittelwerts am RC-Glied)
 unsigned char Analog_text1[20]="AnalogIn =";  // Analogwert AN0 (Poti)  16 Zeichen pro Zeile
 unsigned char Analog_text2[20]="AnalogOut=";  // Analogwert AN7 (Istwert des PWM-Mittelwerts am RC-Glied)
 unsigned char leer[]          ="                ";
-unsigned char mask = 0xCF;
+unsigned char temp = 0x00;
 
 void init()
 {
 	// IO Ports, sind standartmäßig auf Eingang
 	TRISCbits.TRISC2 = 0;	// RC2 als Ausgang für PWM
+	
+	TRISBbits.TRISB0 = 0;	// Ausgänge für LED 1 und 3
+	TRISBbits.TRISB2 = 0;
+	
 
 #ifndef Simulator	// LCD-Initialisierung mit Portzuweisung RA<3:1> und RD<3:0>
 	lcd_init();		// Alle LCD-Funktionen werden für die Simulation herausgenommen,
@@ -46,8 +50,9 @@ void init()
 
 	CCP1CON = 0x0F;	// CCP1 als PWM Modul konfigurieren, 
 
-	//T2CON = 0x06;	// Timer 2 Einstellungen
-	T2CON = 0x04;
+	T2CON = 0x04;	// Timer 2 Einstellungen
+	PORTBbits.RB0 = 1;
+	
 	PR2 = 0xFF;
 
 	ADCON0 = 0x81;	// A/D-Umsetzer Einstellungen
@@ -60,47 +65,49 @@ void main()
 	init();
 	while(1)
 	{
-		ADCON0bits.GO = 1;	// A/D-Umsetzung durchführen
-		while(ADCON0bits.DONE == 1)
+		if(PORTAbits.RA4 == 0)
 		{
+			while(PORTAbits.RA4 == 0);
+			
+			if(T2CON == 0x04))	// Timer 2 auf 16 Prescale und LED setzten
+			{
+				T2CON = 0x06;
+				PORTBbits.RB0 = 0;
+				PORTBbits.RB2 = 1;
+			}
+			else(T2CON == 0x06)	// Timer 2 auf 1 Prescale und LED setzten
+			{
+				T2CON = 0x04;
+				PORTBbits.RB2 = 0;
+				PORTBbits.RB0 = 1;
+			}
 		}
+		
+		ADCON0bits.GO = 1;	// A/D-Umsetzung durchführen
+		while(ADCON0bits.DONE == 1);
 
 
 		// A/D-Converter: Werteverarbeitung Kanal 0 oder 7
 		//Analogkanal 0 wurde eingelesen (Poti Sollwert)
 		if(!ADCON0bits.CHS2 && !ADCON0bits.CHS1 && !ADCON0bits.CHS0)
-		{
-			//if(ADCON0bits.DONE == 0)	
-			//{
-				Rlncf(ADRESL, 1, 0)
-				Rlncf(ADRESL, 1, 0)
-				
-				x = ADRESH;			// Berechnung von x
-				x = x << 2;
-				x += ADRESL; 
+		{				
+				x = ADRES;			// Berechnung von x
+				x = x >> 6;
 				
 				CCPR1L = ADRESH;	// Duty Cycle für PWM  einstellen
-				ADRESL = ADRESL << 4;
-				ADRESL = ADRESL | mask;
-				CCP1CON = ADRESL;
+				temp = ADRESL >> 2;
+				CCP1CON = 0x0F;
+				CCP1CON = CCP1CON | temp;
 
 				ADCON0 = 0xB9;		// Channel 7 auswählen
-			//}
 		}
 		//Analogkanal 7 wurde eingelesen (RC-Ausgang Istwert)
 		else if(ADCON0bits.CHS2 && ADCON0bits.CHS1 && ADCON0bits.CHS0)
-		{
-			//if(ADCON0bits.DONE == 0)
-			//{
-				Rlncf(ADRESL, 1, 0)
-				Rlncf(ADRESL, 1, 0)	
-				
-				y = ADRESH;			// Berechnung von y
-				y = y << 2;
-				y += ADRESL;
+		{				
+				y = ADRES;			// Berechnung von y
+				y = y >> 6;
 
 				ADCON0 = 0x81;		// Channel 0 auswählen
-			//}
 		}
 
 #ifndef Simulator
